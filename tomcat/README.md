@@ -3,8 +3,8 @@
     1. 在Tomcat的根目录下找到/conf/server.xml文件打开，找到如下位置
     ![image](image/tomact-conf-server.png)
     2. 这段配置修改为如下配置
-    '''xml
-    <Connector port="8443" 
+    '''java
+    <Connector port="8443" 
       protocol="org.apache.coyote.http11.Http11Protocol" 
       maxThreads="150"  
       SSLEnabled="true"  
