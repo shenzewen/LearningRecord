@@ -3,7 +3,7 @@
     1. 在Tomcat的根目录下找到/conf/server.xml文件打开，找到如下位置
     ![image](image/tomact-conf-server.png)
     2. 这段配置修改为如下配置
-    '''java
+    ```xml
     <Connector port="8443" 
       protocol="org.apache.coyote.http11.Http11Protocol" 
       maxThreads="150"  
@@ -32,4 +32,5 @@
                     TLS_RSA_WITH_3DES_EDE_CBC_SHA,
                     TLS_RSA_WITH_RC4_128_SHA,
                     TLS_RSA_WITH_RC4_128_MD5" 
-        sslEnabledProtocols="TLSv1.2" />'''
+        sslEnabledProtocols="TLSv1.2" />
+        ```
