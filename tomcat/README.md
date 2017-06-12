@@ -1,7 +1,7 @@
 # Tomcat添加双向认证
 1. 配置Tomcat服务为https访问和单向认证
     1. 在Tomcat的根目录下找到/conf/server.xml文件打开，找到如下位置
-    ![image](tomact-conf-server.png)
+    ![image](image/tomact-conf-server.png)
     2. 这段配置修改为如下配置
     '''xml
     <Connector port="8443" 
