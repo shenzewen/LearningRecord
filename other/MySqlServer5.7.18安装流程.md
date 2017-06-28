@@ -79,7 +79,7 @@ default-storage-engine=INNODB
 
 启动服务命令为：`net start MySQL`
 
-![启动服务图片](mysql_start_success.png)
+![启动服务图片](image/mysql_start_success.png)
 
 方法二：
 
