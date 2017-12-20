@@ -7,3 +7,5 @@
 [MySqlServer5.7.18安装流程](https://github.com/kevin4908/LearningRecord/tree/master/other/MySqlServer5.7.18安装流程.md)
 
 [Remarkable在ubuntu下安装](https://github.com/kevin4908/LearningRecord/tree/master/other/remarkable_install.md) 
+
+[mysql5.7在ubuntu下安装](https://github.com/kevin4908/LearningRecord/tree/master/other/mysql_install.md) 
