@@ -34,5 +34,7 @@ sudo apt-get install libmysqlclient -y
 
 服务管理命令
 启动: ``` sudo service mysql start```
+
 停止: ``` sudo service mysql stop```
+
 服务状态: ``` sudo service mysql status```
