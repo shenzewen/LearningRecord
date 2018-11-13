@@ -1,6 +1,12 @@
 # LearningRecord
 <pre align="right">by:2017年06月12日<br>记录学习中的点滴</pre> 
 
+## Android
+
+[Android笔记](https://github.com/kevin4908/LearningRecord/tree/master/android/android_note.md) 
+
+
+
 ## Git
 
 [git笔记](https://github.com/kevin4908/LearningRecord/tree/master/git/git_note.md) 

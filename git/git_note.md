@@ -1,6 +1,6 @@
 # git note
 
-###1. ssh公钥生成命令
+### 1. ssh公钥生成命令
 
 ```ssh-keygen -t rsa -C "XXXXXX@XXX.com” -f ~/.ssh/gitlab_id-rsa```
 
