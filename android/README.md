@@ -1,3 +1,3 @@
 ## Android
 
-[Android笔记](https://github.com/kevin4908/LearningRecord/tree/master/android/android_note.md) 
+[Android笔记](/android/android_note.md) 

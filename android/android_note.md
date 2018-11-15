@@ -16,7 +16,7 @@ editText.setHorizontallyScrolling(false);
 
 * **自定义带标题边框的Layout**
 
-自定义View[TitleBorderLayout.java](https://github.com/kevin4908/LearningRecord/tree/master/android/file/TitleBorderLayout.java) 
+自定义View[TitleBorderLayout.java](/android/file/TitleBorderLayout.java) 
 
 自定义attribute
 
