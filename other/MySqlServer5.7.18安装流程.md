@@ -54,7 +54,7 @@
 
 注：`my-default.ini`文件在MySQL解压后的根目录下，如果没有，下面附上我的`my-default.ini`文件内容,只需要在MySQL根目录下新建txt文档，名称改为`my-default.ini`,再把下面的内容复制到文档里就可以了。
 
-```
+```properties
 [mysql]
 # 设置mysql客户端默认字符集
 default-character-set=utf8 
@@ -92,7 +92,7 @@ default-storage-engine=INNODB
 刚安装完成时root账号默认密码为空，此时可以将密码修改为指定的密码。如：123456
 
 方法一：
-```
+```sql
 c:>mysql –uroot
 
 mysql>show databases;
@@ -107,6 +107,6 @@ mysql>QUIT
 ```
 方法二：
 利用第三方管理工具进行密码修改。如Navicatfor MySQL
-```
+```sql
 GRANT ALL PRIVILEGES ON *.* TO 'myuser'@'192.168.1.3' IDENTIFIED BY 'mypassword' WITH GRANT OPTION;
 ```

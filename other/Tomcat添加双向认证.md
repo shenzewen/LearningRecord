@@ -3,7 +3,7 @@
 ### 1.1 在Tomcat的根目录下找到/conf/server.xml文件打开，找到如下位置
 
     ![tomact-conf-server](image/tomact-conf-server.png)
-    
+​    
 ### 1.2 这段配置修改为如下配置
 ```xml
     <Connector port="8443" 
@@ -105,7 +105,7 @@ client.truststore里面放的是信任客户端的证书
 
 ## 3 附上生成证书需要的bat内容
 
-```vim
+```bat
 set SERVER_DN="CN=192.168.XXX.XXX, OU=cybersoft.com, O=cybersoft, L=CN, S=CN, C=CN" 
 set CLIENT_DN="CN=cybersoft.com.tw, OU=cybersoft.com, O=cybersoft, L=CN, S=CN, C=CN"
 set PASS_SET="client"

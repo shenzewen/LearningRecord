@@ -1,6 +1,6 @@
 # ubuntu 下 mysql 5.7的安装
 ### 1. 安装服务端和客户端
-```
+```shell
 sudo apt-get install mysql-server -y
 sudo apt-get install mysql-client -y
 sudo apt-get install libmysqlclient -y

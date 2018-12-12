@@ -10,7 +10,7 @@
 
 在~/.ssh目录下添加config配置文件内容如下
 
-```Host gitlab.com
+```shell
 #文件内容如下
 #gitlab
 Host gitlab.com
@@ -26,7 +26,7 @@ User youname
 
 ### 3. 配置name和email
 
-```git config --global user.name "XXXX@XX.com"
+```shell
 #全局
 git config --global user.name "XXXX"
 git config --global user.email "XXXX@XX.com"
@@ -39,7 +39,7 @@ git config user.email "XXXX@XX.com"
 
 ### 4.远程仓库操作
 
-```
+```shell
 #1.修改命令
 git remote origin set-url [url]
 #2.删除命令
@@ -56,7 +56,7 @@ git remote rename [name] [newname]
 
 ### 5. 文件比对
 
-```
+```shell
 #工作区与暂存区比较
 git diff HEAD [filepath]
 #工作区与HEAD(当前工作分支)比较
@@ -72,7 +72,7 @@ git diff [commitId] [filepath]
 
 ### 6. subtree拆分大的git库到多个独立git库
 
-```
+```shell
 # 这就是那个大仓库 big-project
 $ git clone git@github.com:tom/big-project.git
 $ cd big-project
