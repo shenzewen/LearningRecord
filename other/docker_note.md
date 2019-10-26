@@ -87,5 +87,17 @@ $ cat /etc/timezone
 ```shell
 # 进入docker容器方法用好几种, 这里只写我用过的一种, 使用exec进入
 sudo docker exec -it 容器名/容器ID /bin/bash
+# 进入docker容器也可以解决时区问题，修改为东八区的时间可以使用以下命令, 这个方法同样适用于修改Linux系统的时间
+cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# 修改时区设置，使用以下命令打开文件，修改内容为Asia/Shanghai即可
+vim /etc/timezone
 ```
 
+### 4）、docker容器创建命令
+
+```shell
+# oracle12c运行
+docker run -e TZ="Asia/Shanghai" -d -p 1521:1521 -p 5500:5500 --name oracle12c [镜像ID/镜像名称:TAG]
+# mysql运行
+docker run -e TZ="Asia/Shanghai" -p 3306:3306 --name mysql7 -e MYSQL_ROOT_PASSWORD=123456 -d [镜像ID/镜像名称:TAG]
+```
