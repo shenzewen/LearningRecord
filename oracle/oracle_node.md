@@ -3,6 +3,8 @@
 ## 1.安装步骤
 ### 1). 安装依赖包，官方给出如下：
 ```shell
+SUSE 安装命令为zypper
+
 binutils-2.17.50.0.6
 compat-libstdc++-33-3.2.3
 compat-libstdc++-33-3.2.3 (32 bit)
@@ -80,9 +82,9 @@ passwd: all authentication tokens updated successfully.
 ### 3). 创建目录
 
 ```shell
-[root@ora12c Server]# mkdir -p /oracle/
-[root@ora12c Server]# chown -R oracle:oinstall /oracle/
-[root@ora12c Server]# chmod -R 775 /oracle/
+[root@ora12c Server]# mkdir -p /usr/local/oracle/
+[root@ora12c Server]# chown -R oracle:oinstall /usr/local/oracle/
+[root@ora12c Server]# chmod -R 775 /usr/local/oracle/
 ```
 
 ### 4). 修改内核参数
@@ -149,9 +151,9 @@ oracle           hard    stack  10240
 在 .bash_profile配置如下变量
 
 oracle@ora12c ~]$ vim .bash_profile
-export ORACLE_BASE=/oracle/12c
+export ORACLE_BASE=/usr/local/oracle/12c
 export ORACLE_HOME=$ORACLE_BASE/db1
-export ORACLE_SID=orcl12c
+export ORACLE_SID=orcl
 export PATH=$ORACLE_HOME/bin:$PATH:$HOME/bin
 export EDITOR=/bin/vi
 使配置文件生效
@@ -166,15 +168,15 @@ export EDITOR=/bin/vi
 下一步下一步，
 root用户下运行两个脚本
 ```shell
-[root@ora12c Server]# cd /oracle/oraInventory/
+[root@ora12c Server]# cd /usr/local/oracle/oraInventory/
 [root@ora12c oraInventory]# ./orainstRoot.sh
 Changing permissions of /oracle/oraInventory.
 Adding read,write permissions for group.
 Removing read,write,execute permissions for world.
 
-Changing groupname of /oracle/oraInventory to oinstall.
+Changing groupname of /usr/local/oracle/oraInventory to oinstall.
 The execution of the script is complete.
-[root@ora12c oraInventory]# cd /oracle/12c/db1/
+[root@ora12c oraInventory]# cd /usr/local/oracle/12c/db1/
 [root@ora12c db1]# ./root.sh
 Performing root user operation for Oracle 12c
 
@@ -233,6 +235,9 @@ The command completed successfully
 使用sqlplus连接数据库
 
 ```shell
+命令：sqlplus 用户名/密码@ip地址[:端口]/service_name [as sysdba]
+示例：sqlplus sys/pwd@ip:1521/test as sysdba 
+
 [oracle@ora12c ~]$ sqlplus / as sysdba
 
 SQL*Plus: Release 12.1.0.1.0 Production on Thu Jun 27 12:41:41 2013
@@ -273,7 +278,7 @@ show pdbs
 alter pluggable database [pdb_name] open;
 
 #切换/启用PDB容器
-alter session set container=[pdb_name];
+alter session set container=ORCLPDB;
 
 #查看PDB名称对应的SERVICE
 select name,network_name,pdb from v$services;
@@ -283,6 +288,14 @@ exec dbms_service.create_service('name','network_name');
 exec dbms_service.start_service('name');
 exec dbms_service.stop_service('name');
 exec dbms_service.delete_service('name');
+
+#创建用户
+create user username identified by password;  --新建用户并设置密码
+grant create session to username;  --赋予登陆权限
+grant unlimited tablespace to username; --赋予用户无限表空间
+grant connect,resource to username;  --给用户赋予权限
+GRANT CREATE ANY VIEW,DROP ANY VIEW,CONNECT,RESOURCE,CREATE SESSION,DBA TO username; --授予DBA权限
+grant create view to  username; --赋予用户创建视图的权限
 ```
 
 ## 3. 监听服务listener
@@ -307,4 +320,67 @@ lsnrctl start
 2. sqlplus sys/oracle 这种连接方式只能连接本机数据库，同样不需要listener进程
 3. sqlplus sys/oracle@orcl 这种方式需要listener进程处于可用状态。最普遍的通过网络连接。
 4. sqlplus sys/pwd@ip:1521/test as sysdba 同上
+```
+
+## 5. 常见问题解决
+
+```shell
+1. ORA-27101:shared memory realm does not exit
+解决方法: 在sqlplus中执行如下语句
+alter system set listener_networks='(( NAME=listener)(LOCAL_LISTENER=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.0.182)(PORT=2521)))))' scope=spfile;
+
+2. /usr/local/jdk1.8.0_144/jre/lib/amd64/libawt_xawt.so: libXtst.so.6: 无法打开共享对象文件: 没有那个文件或目录
+解决方法：yum install libXi libXp libXtst
+```
+
+## 6. 密码过期解决方案
+```shell
+1. 查看用户的proifle是哪个，一般是default ：
+SELECT username,PROFILE FROM dba_users;
+tips: 如果是pdb用户需要切换pdb才能看到该用户
+
+2. 查看对应的概要文件(如default)的密码有效期设置：
+SELECT * FROM dba_profiles s WHERE s.profile='DEFAULT' AND resource_name='PASSWORD_LIFE_TIME';
+
+3. 将概要文件(如default)的密码有效期由默认的180天修改成“无限制”：
+ALTER PROFILE DEFAULT LIMIT PASSWORD_LIFE_TIME UNLIMITED;
+
+4. 修改后，还没有被提示ORA-28002警告的用户账号不会再碰到同样的提示;而已经被提示的用户账号必须再改一次密码，举例如下：
+alter user 用户名 identified by <原来的密码> account unlock; ----不用换新密码
+样例： alter  sys as sysdba identified by abcABC;
+```
+
+## 7. xstart连接问题
+```shell
+yum install xorg-x11-xauth
+yum install xterm
+#运行 ./runInstaller 报如下错误时执行
+#Could not execute auto check for display colors using command /usr/bin/xdpyinfo. Check if the DISPLAY variable is set.
+yum install xdpyinfo
+```
+
+## 7. 使用sqlplus导入sql脚本，出现表中数据中文乱码
+```shell
+绝大多数情况是环境变量NLS_LANG的值和数据库字符集不一致导致，建议修改NLS_LANG，方便、简单、安全。 
+解决步骤如下： 
+1.查看环境变量： **查询值为空，说明未设置环境变量
+echo $NLS_LANG
+
+2.使用PL/SQL或者SQLPlus执行： 查询服务端的字符集编码 
+select userenv(‘language’) from dual;
+
+3.设置环境变量：xxxx是由步骤2查出来的字符集编码值 
+[oracle@ ~]$ export NLS_LANG=xxxx
+
+4.登录sqlplus执行插入语句或导入sql脚本文件
+
+SQL > @filename.sql
+
+扩展： 
+修改NLS_LNAG,有两种方式 
+1，临时修改 在当前登录终端执行export NLS_LANG=XX (XX：表示数据库字符集) 
+本地登录退出后失效 
+2，永久修改 修改.bash_profile，在文件中加入export NLS_LANG=XX (XX：表示数据库字符集) 
+重新登录后永久生效 
+问题：如果在设置环境变量的时候出现“XX: not a valid identifier”，检查=前后是否有空格、检查XX中是否有空格，如果有空格要将XX用双引号包括。例如：export NLS_LANG=“SIMPLIFIED CHINESE_CHINA.ZHS16GBK”
 ```
