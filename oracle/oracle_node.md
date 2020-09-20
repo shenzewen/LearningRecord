@@ -70,7 +70,8 @@ Preparing...                ########################################### [100%]
 ```shell
 [root@ora12c Server]# groupadd oinstall
 [root@ora12c Server]# groupadd dba
-[root@ora12c Server]# useradd -g oinstall -G dba oracle
+[root@ora12c Server]# groupadd oper
+[root@ora12c Server]# useradd -g oinstall -G dba,oper oracle
 [root@ora12c Server]# passwd oracle
 Changing password for user oracle.
 New UNIX password:
@@ -96,7 +97,7 @@ passwd: all authentication tokens updated successfully.
 fs.aio-max-nr = 1048576
 fs.file-max = 6815744
 kernel.shmall = 2097152
-kernel.shmmax = 536870912
+kernel.shmmax = 1967415296
 kernel.shmmni = 4096
 kernel.sem = 250 32000 100 128
 net.ipv4.ip_local_port_range = 9000 65500
@@ -145,7 +146,7 @@ oracle           hard    stack  10240
 
 ```
 
-### 6). 修改用户限制
+### 6). 修改环境变量
 
 ```shell
 在 .bash_profile配置如下变量
@@ -176,6 +177,7 @@ Removing read,write,execute permissions for world.
 
 Changing groupname of /usr/local/oracle/oraInventory to oinstall.
 The execution of the script is complete.
+
 [root@ora12c oraInventory]# cd /usr/local/oracle/12c/db1/
 [root@ora12c db1]# ./root.sh
 Performing root user operation for Oracle 12c
@@ -276,12 +278,22 @@ show pdbs
 
 #打开PDB容器
 alter pluggable database [pdb_name] open;
+#打开所有PDB容器
+alter pluggable database all open;
 
 #切换/启用PDB容器
 alter session set container=ORCLPDB;
 
 #查看PDB名称对应的SERVICE
 select name,network_name,pdb from v$services;
+
+#创建PDB
+create pluggable database PDB2 admin user pdb2admin identified by 123456 file_name_convert=('/usr/local/oracle/12c/oradata/orcl/pdbseed','/usr/local/oracle/12c/oradata/orcl/pdb2');
+
+create pluggable database testpdb admin user testpdbadmin identified by 123456 file_name_convert=('/data/app/oracle/oradata/pdbseed','/data/app/oracle/oradata/testpdb');
+
+#删除PDB
+drop pluggable database PDB2 including datafiles;
 
 #创建、启动、关闭、删除服务的相关命令，重启后服务丢失
 exec dbms_service.create_service('name','network_name');
@@ -291,10 +303,12 @@ exec dbms_service.delete_service('name');
 
 #创建用户
 create user username identified by password;  --新建用户并设置密码
+create user chase_dzfp identified by 123456;
+create user orclpdb identified by orclpdb123;
 grant create session to username;  --赋予登陆权限
 grant unlimited tablespace to username; --赋予用户无限表空间
 grant connect,resource to username;  --给用户赋予权限
-GRANT CREATE ANY VIEW,DROP ANY VIEW,CONNECT,RESOURCE,CREATE SESSION,DBA TO username; --授予DBA权限
+GRANT CREATE ANY VIEW,DROP ANY VIEW,CONNECT,RESOURCE,CREATE SESSION,DBA TO chase_dzfp; --授予DBA权限
 grant create view to  username; --赋予用户创建视图的权限
 ```
 
@@ -312,7 +326,7 @@ lsnrctl stop
 lsnrctl start
 ```
 
-## 4. 常用命令
+## 4. sqlplus常用连接命令
 
 ```shell
 #  sqlplus 连接数据库的几种方式
@@ -320,6 +334,7 @@ lsnrctl start
 2. sqlplus sys/oracle 这种连接方式只能连接本机数据库，同样不需要listener进程
 3. sqlplus sys/oracle@orcl 这种方式需要listener进程处于可用状态。最普遍的通过网络连接。
 4. sqlplus sys/pwd@ip:1521/test as sysdba 同上
+	sqlplus chase_dzfp/123456@localhost:1521/ALEDZ
 ```
 
 ## 5. 常见问题解决
@@ -331,6 +346,14 @@ alter system set listener_networks='(( NAME=listener)(LOCAL_LISTENER=(DESCRIPTIO
 
 2. /usr/local/jdk1.8.0_144/jre/lib/amd64/libawt_xawt.so: libXtst.so.6: 无法打开共享对象文件: 没有那个文件或目录
 解决方法：yum install libXi libXp libXtst
+
+3. ORA-01035: ORACLE only available to users with RESTRICTED SESSION privilege
+描述：ORA-01035：ORACLE仅对具有RESTRICTED SESSION特权的用户可用
+解决方法：1. 授予用户restricted session权限，grant restricted session to DZFP_TEST;
+		  2. 将数据库修改为正常模式（即退出限制模式）
+			 alter system disable restricted session;
+			 由正常模式切换到限制模式的方法
+			 alter system enable restricted session;
 ```
 
 ## 6. 密码过期解决方案
@@ -347,7 +370,7 @@ ALTER PROFILE DEFAULT LIMIT PASSWORD_LIFE_TIME UNLIMITED;
 
 4. 修改后，还没有被提示ORA-28002警告的用户账号不会再碰到同样的提示;而已经被提示的用户账号必须再改一次密码，举例如下：
 alter user 用户名 identified by <原来的密码> account unlock; ----不用换新密码
-样例： alter  sys as sysdba identified by abcABC;
+样例： alter user sys as sysdba identified by abcABC;
 ```
 
 ## 7. xstart连接问题
@@ -357,6 +380,9 @@ yum install xterm
 #运行 ./runInstaller 报如下错误时执行
 #Could not execute auto check for display colors using command /usr/bin/xdpyinfo. Check if the DISPLAY variable is set.
 yum install xdpyinfo
+
+xstart启动命令栏输入
+/usr/bin/xterm -ls -display $DISPLAY
 ```
 
 ## 7. 使用sqlplus导入sql脚本，出现表中数据中文乱码
@@ -383,4 +409,111 @@ SQL > @filename.sql
 2，永久修改 修改.bash_profile，在文件中加入export NLS_LANG=XX (XX：表示数据库字符集) 
 重新登录后永久生效 
 问题：如果在设置环境变量的时候出现“XX: not a valid identifier”，检查=前后是否有空格、检查XX中是否有空格，如果有空格要将XX用双引号包括。例如：export NLS_LANG=“SIMPLIFIED CHINESE_CHINA.ZHS16GBK”
+```
+## 8. Centos7 Linux 设置开机启动oracle
+```
+# root用户下, 打开oratab文件，修改N为Y
+vi /etc/oratab
+orcl:/usr/local/oracle/12c/db1:Y
+
+# user oracle 下面修改：
+cd $ORACLE_HOME/bin
+vi dbstart
+找到 ORACLE_HOME_LISTNER=$1  这行， 修改成:
+ORACLE_HOME_LISTNER=/usr/local/oracle/12c/db1      //建议这一条
+或者直接修改成：
+ORACLE_HOME_LISTNER=$ORACLE_HOME
+
+同样道理修改 dbshut
+[oracle@data55 bin]$ vi dbshut
+测试运行 dbshut, dbstart 看能否启动oracle 服务及listener服务
+
+# root下修改系统启动项
+vi /etc/rc.d/rc.local
+末尾添加
+su - oracle -lc dbstart
+
+# 在CentOS7中,官方将/etc/rc.d/rc.local 的开机自启的权限禁止掉了,他为了兼容性,设置了这个,但是并不默认启动.如果需要的话.执行以下代码
+chmod +x /etc/rc.d/rc.local
+```
+
+## 9. 配置PDB自启动，随着DB启动而启动
+```
+# 切换到CBD
+alter session set container=CDB$ROOT;
+
+# 创建PDB自启动的Trigger
+CREATE OR REPLACE TRIGGER open_pdbs
+AFTER STARTUP ON DATABASE
+BEGIN
+EXECUTE IMMEDIATE 'ALTER PLUGGABLE DATABASE ALL OPEN';
+END open_pdbs;
+/
+
+# 删除PDB自启动的Trigger
+DROP TRIGGER open_pdbs
+```
+
+## 10. ORACLE 12C EM端口关闭及修改方法
+```
+sqlplus / as sysdba  连接到CDB库
+exec dbms_xdb_config.sethttpsport(0);   把em端口设置成0，即可关闭em
+设置完成后，退出sql命令窗口，使用lsnrctl status 查询状态
+ 
+ 修改em端口
+sqlplus / as sysdba  连接pdb数据库
+exec dbms_xdb_config.sethttpsport(5500);  设置em的端口及启动
+查询em状态，退出sql窗口
+lsnrctl status
+```
+
+## 11. 数据库无法连接，防火墙问题
+```
+# firewall
+# 查看防火墙所有开放的端口
+firewall-cmd --zone=public --list-ports
+
+#查看防火墙状态
+firewall-cmd --state
+
+添加指定需要开放的端口： 
+firewall-cmd --add-port=123/tcp --permanent 
+
+重载入添加的端口： 
+firewall-cmd --reload 
+
+查询指定端口是否开启成功： 
+firewall-cmd --query-port=123/tcp
+
+移除指定端口： 
+firewall-cmd --permanent --remove-port=123/tcp
+
+#扩展信息
+#查看监听的端口
+netstat -lnpt
+#检查端口被哪个进程占用
+netstat -lnpt |grep prot
+#查看进程的详细信息
+ps PID
+
+
+# iptables
+#直接改iptables配置就可以了：
+vim /etc/sysconfig/iptables
+#最后
+service iptables restart
+```
+
+## 12. oracle默认监听端口查看
+```
+SQL> show parameter local_listener;
+ 
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+local_listener			     string	 LISTENER_ORCL
+ 
+SQL>   alter system set local_listener="(address=(protocol=tcp)(host=szwvm)(port=2521))";
+ 
+System altered.
+
 ```
